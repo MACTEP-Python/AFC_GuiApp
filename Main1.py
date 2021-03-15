@@ -1,19 +1,22 @@
 from PyQt5 import QtWidgets
-
 from AFCGui import Ui_Form
+import getData
 
 
 class MainForm(QtWidgets.QWidget, Ui_Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.login_pushButton.clicked.connect(self.autorization)
+        self.login_pushButton.clicked.connect(self.authorization)
         self.browse_pushButton.clicked.connect(self.browsefile)
         self.clear_pushButton.clicked.connect(self.clearing)
-        self.filepath = ''  # Объявляю переменную, в которую буду сохранять путь до исследуемого файла.
+        self.filepath = 0  # Объявляю переменную, в которую буду сохранять путь до исследуемого файла.
         # Что бы была возможность использовать данную переменную в других функциях
+        self.data = 0
+        self.samplerate = 0
+        self.showGraphic_pushButton.clicked.connect(self.showgraphic)
 
-    def autorization(self):  # Функция авторизации в приложение
+    def authorization(self):  # Функция авторизации в приложение
         user_name = 'admin'
         user_password = 'admin'
         # user_name = self.username_lineEdit.text()
@@ -31,14 +34,30 @@ class MainForm(QtWidgets.QWidget, Ui_Form):
                 QtWidgets.QMessageBox.critical(self, "Wrong!", f"Sorry, User - {user_name} is not find!")
 
     def browsefile(self):  # Функция поиска файла через диалоговое окно ОС
-        self.filepath = QtWidgets.QFileDialog.getOpenFileName(self, caption='Choose file',
+        self.filepath = QtWidgets.QFileDialog.getOpenFileName(self, caption='Выберите файл',
                                                               directory=r'D:\Диссертация\АЧХ катушек ОПК и '
                                                                         r'МПК\15022021 классич АЧХ '
-                                                                        r'ПК над рельсом\2_15_2021_14_47_54_bin')
+                                                                        r'ПК над рельсом\2_15_2021_14_47_54_bin',
+                                                              filter='*.wav')
+        self.filepath = self.filepath[0]
+        self.Browse_lineEdit.setText(self.filepath)  # вписываем в поле полный путь до исследуемого файла
 
     def clearing(self):  # Вданный момент функция выводит в диалоговое окно распечатку пути до файла. Проверяю
         # перекрестные переменные
-        print(self.filepath[0])
+        if self.filepath == 0:
+            QtWidgets.QMessageBox.critical(self, "Wrong!", f"Вы не выбрали файл!!!")
+        else:
+            print(self.filepath)
+
+    def showgraphic(self):
+        a1 = getData.getdata(self.filepath)  # Создал отдельный файл с функцией для чтения wav формата и вывода
+        # данных и частоты дисретизации
+        self.samplerate = a1[0]
+        self.data = a1[1]
+        if a1[0] == 0:
+            QtWidgets.QMessageBox.critical(self, "Warning!", f"Файл не был прочитан!")
+        else:
+            print(self.samplerate)
 
 
 if __name__ == '__main__':
