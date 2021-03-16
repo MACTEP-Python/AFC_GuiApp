@@ -1,11 +1,7 @@
 from PyQt5 import QtWidgets
-from PyQt5 import QtGui
-from PyQt5.QtGui import QBrush, QPen, QPainter
-from PyQt5.QtCore import Qt
 from AFCGui import Ui_Form
 import getData
 import numpy as np
-
 
 
 class MainForm(QtWidgets.QWidget, Ui_Form):
@@ -69,7 +65,7 @@ class MainForm(QtWidgets.QWidget, Ui_Form):
 
     def clearing(self):  # Вданный момент функция выводит в диалоговое окно распечатку пути до файла. Проверяю
         # перекрестные переменные
-        # self.graphicsView.clear()
+        self.graphicsView.clear()
         if self.filepath == 0:
             QtWidgets.QMessageBox.critical(self, "Wrong!", "Вы не выбрали файл!!!")
         else:
@@ -85,13 +81,14 @@ class MainForm(QtWidgets.QWidget, Ui_Form):
         else:
             print(self.samplerate)
             print(self.data)
-            x = np.arange(0, len(self.data) / self.samplerate, (1 / self.samplerate))
-            y = self.data
+            x = np.arange(0, len(a1[1]) / a1[0], (1 / a1[0]))
+            y = a1[1]
             self.graphicsView.plot(x, y)
 
 
 if __name__ == '__main__':
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     widget = MainForm()
     widget.show()
