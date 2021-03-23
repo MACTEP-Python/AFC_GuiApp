@@ -23,10 +23,10 @@ class MainForm(QtWidgets.QWidget, Ui_Form):
         self.showGraphic_pushButton.clicked.connect(self.showgraphic)
 
     def authorization(self):  # Функция авторизации в приложение
-        # user_name = 'admin'
-        # user_password = 'admin'
-        user_name = self.username_lineEdit.text()
-        user_password = self.password_lineEdit.text()
+        user_name = 'admin'
+        user_password = 'admin'
+        # user_name = self.username_lineEdit.text()
+        # user_password = self.password_lineEdit.text()
         if user_name == '' or user_password == '':
             QtWidgets.QMessageBox.critical(self, "Wrong!", f"You forgot to input Username or Password, sir!")
         else:
@@ -66,10 +66,6 @@ class MainForm(QtWidgets.QWidget, Ui_Form):
     def clearing(self):  # Вданный момент функция выводит в диалоговое окно распечатку пути до файла. Проверяю
         # перекрестные переменные
         self.graphicsView.clear()
-        if self.filepath == 0:
-            QtWidgets.QMessageBox.critical(self, "Wrong!", "Вы не выбрали файл!!!")
-        else:
-            print(self.filepath)
 
     def showgraphic(self):
         a1 = getData.getdata(self.filepath)  # Создал отдельный файл с функцией для чтения wav формата и вывода
@@ -82,7 +78,7 @@ class MainForm(QtWidgets.QWidget, Ui_Form):
             print(self.samplerate)
             print(self.data)
             x = np.arange(0, len(a1[1]) / a1[0], (1 / a1[0]))
-            y = a1[1]
+            y = self.data / 1E6
             self.graphicsView.plot(x, y)
 
 
