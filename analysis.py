@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
 # Модуль инициализации первичных данных
 indexes = []
 d = []  # Создаю пустой список, куда буду собирать числовые данные сигналов
@@ -11,7 +12,7 @@ k = 5 / 5.1
 fs = float(50e3)  # Частота дискретизации
 
 # Модуль выбора и чтения файла по шаблону
-FolderName = r"D:\TEST_Stadler\s160918_020000"
+FolderName = r"D:\Штадлер 2020\5ти вагонный\испытания в ночь с 10 на 11 марта 2020\s200311_012325"
 currentDirectory = pathlib.Path(FolderName)  # Определение текущей директории
 currentPattern = '*.ana'  # Шаблон для выбора необходимых файлов с расширением ana
 for currentFile in currentDirectory.glob(currentPattern):  # В цикле мы пробегаем по каждому файлу в директории
@@ -41,3 +42,5 @@ plt.grid()
 plt.show()
 
 print("Готово!")
+
+# Блок выделения фрагмента данных
