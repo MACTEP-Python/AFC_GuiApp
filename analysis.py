@@ -1,46 +1,42 @@
-import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+from OpenFileModule import createDataFrame
 
-
-# Модуль инициализации первичных данных
-indexes = []
-d = []  # Создаю пустой список, куда буду собирать числовые данные сигналов
-i = 1
-k = 5 / 5.1
-fs = float(50e3)  # Частота дискретизации
-
-# Модуль выбора и чтения файла по шаблону
-FolderName = r"D:\Штадлер 2020\5ти вагонный\испытания в ночь с 10 на 11 марта 2020\s200311_012325"
-currentDirectory = pathlib.Path(FolderName)  # Определение текущей директории
+FldrPath = r"D:\TEST_Stadler\s160918_020000"
 currentPattern = '*.ana'  # Шаблон для выбора необходимых файлов с расширением ana
-for currentFile in currentDirectory.glob(currentPattern):  # В цикле мы пробегаем по каждому файлу в директории
-    # и работаем при совпадении с шаблоном
-    with open(str(currentFile), 'rb') as f:
-        data = np.fromfile(f, dtype=np.float32, count=-1)  # Считываю определенное количество данных из
-        # файла
-        d.append(data)  # На каждом витке цикла, добавляю данные их новых файлов
-        indexes.append('sig' + f'{i}')  # Происходит процесс создания имен столбцов
-        i += 1
-
-d = np.matrix(d) * k  # Преобразую данные, сохраненные в списках в матрицу и умножаю на коэфф датчика
-d = d.T  # Транспонирую, что бы каждый столбец был отдельным сигналом
-d = np.concatenate((d, np.array(np.sum(d, axis=1))), axis=1)  # Добавляется столбец с построчной суммой
-indexes.append('Sumsig')  # Добавляется название столбца как суммарный сигнал
-df = pd.DataFrame(d, columns=indexes)  # Создаю Фрейм из сигналов, с названиями столбцов.
+SPR = float(50e3)  # Частота дискретизации
+df = createDataFrame(FldrPath, currentPattern)  # Вывел функцию открытия в отдельный файл
 
 # Блок графики
-xValues = np.arange(0, len(df['Sumsig']) / fs, 1 / fs)
+xValues = np.arange(0, len(df['Sumsig']) / SPR, 1 / SPR)
 fig, ax = plt.subplots()
 ax.plot(xValues, df['Sumsig'])
 ax.set_title("Суммарный ток", fontsize=16)
 ax.set_xlabel("Time")
 ax.set_ylabel("Ток")
-plt.xlim(0, len(df['Sumsig']) / fs)
+plt.xlim(0, len(df['Sumsig']) / SPR)
 plt.grid()
 plt.show()
 
 print("Готово!")
 
-# Блок выделения фрагмента данных
+contin = input("Продолжить?(да(1)/нет(2)): ")
+if contin == '1' or contin == '':
+    # Блок выделения фрагмента данных
+    from OpenFileModule import getslicefromdataframe
+    inputData = getslicefromdataframe(df, SPR)
+    # Блок графики
+    xValues = np.arange(0, len(inputData) / SPR, 1 / SPR)
+    fig, ax = plt.subplots()
+    ax.plot(xValues, inputData)
+    ax.set_title("Суммарный ток", fontsize=16)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Ток")
+    plt.xlim(0, len(inputData) / SPR)
+    plt.grid()
+    plt.show()
+
+    print("Готово!")
+
+elif contin == '2':
+    print('Обработка завершена!')
