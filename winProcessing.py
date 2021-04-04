@@ -4,14 +4,10 @@ Created on Sat Apr  3 13:52:48 2021
 
 @author: MACTEP
 """
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from scipy.fftpack import fft, fftfreq
 
-matrix = np.arange(0, 99)
-
-# Базовая конструкция для того, что бы разбивать последовательность на части, определенной длины 
+ 
 def splitter(data, N, P=0, opt = 'nodelay'):
     """Базовая конструкция для того, что бы разбивать последовательность на части,
     определенной длины N, с перекрытием Р (в процентах, по умолчанию 0) 
@@ -83,6 +79,7 @@ def fftsplitter(data, N, spr, P=0, funk='max', opt='nodelay'):
     return sData, xf
 
 if __name__ == '__main__':
+    matrix = np.arange(0, 99)
     qData = splitter(matrix, 10, 50, 'nodelay')
     
 

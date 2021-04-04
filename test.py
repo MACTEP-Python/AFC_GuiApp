@@ -1,48 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-#import scipy as sp
 from scipy import pi
-from scipy.fftpack import fft, fftfreq
-#from scipy.signal import windows
+from scipy import signal
 
-
-# Базовая конструкция для того, что бы разбивать последовательность на части, определенной длины
-def fftsplitter(data, N, SPR, P=0, funk='max', opt='nodelay'):
-    # Проводим проверку размера окна или длины участа расчета
-    if N > len(data) or N <= 0:
-        print(
-            'Размер окна, не может быть больше размера исследуемого массива или меньше нуля')
-    else:
-        step = int(N - (N*P)/100)  # Определяем шаг движения окна
-        # Определяем индексы начальной выборки
-        ind1 = np.arange(0, len(data), step)
-        # Создаем нулевую матрицу для сохранения результатов
-        zeroMatrix = np.zeros([N, len(ind1)])
-        # Цикл. Выделяем кусок N из data и сохраняем в массив, двигаемся с шагом step
-        for i, val in enumerate(range(0, len(data), step)):
-            if val+N <= len(data):
-                iCur = i
-                inputData = data[val:val+N]
-# ---------------Блок кода вычисляющего ДПФ участка последовательности---------------
-                N = len(inputData)
-                xf = fftfreq(N, 1 / spr)
-                # Умножаем на 2 действ часть
-                outFFTData = 2 * abs(fft(inputData, N) / N)
-                # Постоянную составляющую нужно разделить на 2
-                outFFTData[0] = outFFTData[0]/2
-# --------------------------------
-                zeroMatrix[:, i] = outFFTData
-        # Опция, которая убирает оставшиеся нулевые столбцы
-        if opt == 'nodelay':
-            sData = zeroMatrix[:, 0:np.size(zeroMatrix, 1)-(i-iCur)]
-        else:
-            sData = zeroMatrix
-        if funk == 'max':
-            sData = sData.max(axis=1)  # Выделяем максимумы в каждой строке
-    sData = sData[0:int(N/2)]  # Убираю зеркальную половину
-    xf = xf[0:int(N/2)]  # Убираю зеркальную половину
-    return sData, xf
+def rms(x):
+    return np.sqrt(x.dot(x)/x.size) 
 
 spr = 50_000
 t = np.arange(0, 5, 1/spr)
@@ -51,13 +13,70 @@ y2 = 0.7*np.sin(2*pi*t*600)+1
 y3 = 1.7*np.sin(2*pi*t*200)
 ySig = np.array([y1, y2, y3]).sum(axis=0)
 
-N = int(spr*2)
-sig, f = fftsplitter(ySig, N, spr, 50, 'max', 'nodelay')
+# Проектирование цифрового полосового  фильтра с АЧХ Чебышева II
+N = int(spr*1)
+fc1 = 590  # Начальная частота пропускания
+fc2 = 610  # Конечная частота пропускания
+Rp = 3  # Допустимый уровень пропускания (дБ) - значит -3 дБ
+Rs = 40  # Уровень задержания (дБ) - значит -40 дБ
+Wp = (np.array([fc1, fc2])*2/spr)  # Нормализуем частоты пропускания (Найквиста)
+Ws = (np.array([fc1-5, fc2+5])*2/spr)  # Нормализуем частоты задержания
 
-sigff = pd.Series(sig, f, dtype='float32')
+ord, Wn = signal.cheb2ord(Wp, Ws, Rp, Rs)  # Определяем минимальный порядок фильтра ord и полосу Найквиста 
+sos = signal.cheby2(ord, Rs, Wn, btype='bandpass', output='sos')  # Расчитываем коэффициенты sos матрицы, как стабильной в отличие от коэффициентов b,a
+sigbb = signal.sosfilt(sos, ySig)  # Производим фильтрацию сигнала
+sigbb = sigbb[spr*1:]  # Убираем первую секунду, как зону нестабильного сигнала после фильтрации
+w, h = signal.sosfreqz(sos, worN=spr)  # Вычисляем коэффициенты для построения АЧХ фильтра
 
-print(sigff.loc[300])
+# Выводим на график АЧХ фильтра
+fig, ax1 = plt.subplots() 
+ax1.set_title('Частотная характеристика цифрового фильтра')
+ax1.plot(spr*w/(2*pi), 20 * np.log10(abs(h)), 'b')  # Переводим ось х в Гц, а значения по y переводим в логарифмический масштаб 
+ax1.set_ylabel('Amplitude [dB]', color='b')  # 
+ax1.set_xlabel('Frequency [Hz]')
+plt.axvline(fc1, color='green')
+plt.axvline(fc2, color='green')
+plt.axhline(-Rp, color='green')
+plt.axhline(-Rs, color='red')
+plt.xlim([fc1-100, fc2+100])  # Устатавливаем лимиты отрисовки по оси х
+plt.grid()  # Добавляем сетку
 
-plt.plot(f, sig)
-plt.xlim([0, 700])
+# Выводим на график отфильтрованный сигнал
+xValues = np.arange(0, (len(sigbb) / spr),
+                    (1 / spr), dtype=np.float32)  # Создаем временной ряд
+fig, ax = plt.subplots()            #
+ax.plot(xValues, sigbb)
+ax.set_title("Суммарный ток", fontsize=14)
+ax.set_xlabel("Time")
+ax.set_ylabel("Ток")
+plt.xlim(0, (len(sigbb) / spr))
+plt.grid()
 plt.show()
+
+print(rms(sigbb)*np.sqrt(2))
+
+def rmssplitter(data, N, P=0, opt = 'nodelay'):
+    """В базовую конструкцию splitter добавлен блок вычисления действующего значения на каждой итерации и далее выбирается максимум"""
+    # Проводим проверку размера окна или длины участа расчета
+    if N > len(data) or N <=0:
+        print('Размер окна, не может быть больше размера исследуемого массива или меньше нуля')
+    else:
+        step = int(N - (N*P)/100)  # Определяем шаг движения окна
+        ind1 = np.arange(0, len(data), step)  # Определяем индексы начальной выборки
+        zeroMatrix = np.empty([1, len(ind1)])  # Создаем нулевую матрицу для сохранения результатов
+        # Цикл. Выделяем кусок N из data и сохраняем в массив, двигаемся с шагом step
+        for i, val in enumerate(range(0, len(data), step)):
+            if val+N <= len(data):
+                iCur = i
+                rmsData = data[val:val+N]
+                rmsOutData = rms(rmsData) 
+                zeroMatrix[:, i] = rmsOutData
+        # Опция, которая убирает оставшиеся нулевые столбцы
+        if opt == 'nodelay':
+            sData = zeroMatrix[:,0:np.size(zeroMatrix,1)-(i-iCur)]
+        else:
+            sData = zeroMatrix
+    return sData.max(axis=1)
+
+q = rmssplitter(sigbb, N, 0, 'nodelay')*np.sqrt(2)
+print(q)

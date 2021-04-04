@@ -27,7 +27,7 @@ def createDataFrame(folder_path, pattern='*.ana', coefficient=(5 / 5.1)):
     return database
 
 
-def getslicefromdataframe(file, sample_rate):
+def getslicefromdataframe(data, sample_rate):
     try:
         tBegin = float(input('Введите время начала: '))
     except ValueError:
@@ -35,6 +35,7 @@ def getslicefromdataframe(file, sample_rate):
     try:
         tEnd = float(input('Введите время окончания: '))
     except ValueError:       
-        tEnd = float(len(file) / sample_rate)
-        file = file[int(float(tBegin) * sample_rate): int(float(tEnd) * sample_rate)]
-    return file
+        tEnd = float(len(data) / sample_rate)
+    else:
+        data = data[int(float(tBegin) * sample_rate): int(float(tEnd) * sample_rate)]
+    return data
