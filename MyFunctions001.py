@@ -215,3 +215,4 @@ if __name__ == '__main__':
     testSignal()
     fftsplitter()
     filterCheb2()
+    buffer()
