@@ -15,7 +15,7 @@ def createDataFrame(folder_path, pattern='*.ana', coefficient=(5 / 5.1)):
         with open(str(currentFile), 'rb') as f:
             data = np.fromfile(f, dtype=np.float32, count=-1)  # Считываю определенное количество данных из
             # файла
-            d.append(data)  # На каждом витке цикла, добавляю данные их новых файлов
+            d.append(data)  # На каждом витке цикла, добавляю данные из новых файлов
             indexes.append('sig' + f'{i}')  # Происходит процесс создания имен столбцов
             i += 1
     d = np.matrix(d)  # Преобразую данные, сохраненные в списках в матрицу и умножаю на коэфф датчика
@@ -27,14 +27,15 @@ def createDataFrame(folder_path, pattern='*.ana', coefficient=(5 / 5.1)):
     return database
 
 
-def getslicefromdataframe(file, sample_rate):
+def getslicefromdataframe(data, sample_rate):
     try:
         tBegin = float(input('Введите время начала: '))
     except ValueError:
         tBegin = 0
     try:
         tEnd = float(input('Введите время окончания: '))
-    except ValueError:       
-        tEnd = float(len(file) / sample_rate)
-        file = file[int(float(tBegin) * sample_rate): int(float(tEnd) * sample_rate)]
-    return file
+    except ValueError:
+        tEnd = float(len(data) / sample_rate)
+    else:
+        data = data[int(float(tBegin) * sample_rate): int(float(tEnd) * sample_rate)]
+    return data
